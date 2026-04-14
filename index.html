@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F601 現場診斷專家系統</title>
+    <style>
+        body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; background: #f0f2f5; padding: 15px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-width: 450px; margin: auto; }
+        h2 { color: #1a73e8; text-align: center; margin-top: 0; font-size: 1.4em; }
+        .input-group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 4px; font-weight: bold; color: #444; font-size: 0.9em; }
+        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; background: #fafafa; }
+        input:focus { border-color: #1a73e8; outline: none; background: #fff; }
+        .theo-box { background: #e8f0fe; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center; color: #1967d2; font-weight: bold; }
+        .result-box { margin-top: 15px; padding: 15px; border-radius: 10px; display: none; }
+        .pass { background: #d4edda; color: #155724; border: 2px solid #c3e6cb; }
+        .fail { background: #f8d7da; color: #721c24; border: 2px solid #f5c6cb; }
+        .warning { background: #fff3cd; color: #856404; border: 2px solid #ffeeba; }
+        .error-list { font-size: 0.9em; margin-top: 10px; padding-left: 0; list-style: none; }
+        .error-item { margin-bottom: 15px; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 10px; }
+        .status-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8em; margin-right: 5px; }
+        .tag-red { background: #f8d7da; color: #721c24; }
+        .tag-yellow { background: #fff3cd; color: #856404; }
+        .suggest-box { display: block; font-size: 0.85em; color: #555; margin-top: 5px; background: rgba(255,255,255,0.7); padding: 8px; border-radius: 6px; line-height: 1.5; border-left: 3px solid #ccc; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>F601 現場診斷系統</h2>
+    
+    <div class="input-group">
+        <label>現場水溫 (°C)</label>
+        <input type="number" id="temp" placeholder="輸入水溫" oninput="calcTheo()">
+    </div>
+
+    <div id="theo_display" class="theo-box">理論聲速：--- m/s</div>
+
+    <div class="input-group"><label>實測聲速 c (m/s)</label><input type="number" id="c_val" oninput="check()"></div>
+    <div class="input-group"><label>振幅 Amplitude (%)</label><input type="number" id="s_val" oninput="check()"></div>
+    <div class="input-group"><label>信號增益 Gain (dB)</label><input type="number" id="g_val" oninput="check()"></div>
+    <div class="input-group"><label>信噪比 SNR (dB)</label><input type="number" id="snr_val" oninput="check()"></div>
+
+    <div id="result" class="result-box">
+        <strong id="status-text" style="font-size: 1.1em; display: block; text-align: center; margin-bottom: 10px;">判定結果</strong>
+        <div id="error-details" class="error-list"></div>
+    </div>
+</div>
+
+<script>
+    let theoC = 0;
+    function calcTheo() {
+        const t = parseFloat(document.getElementById('temp').value);
+        if (isNaN(t)) { theoC = 0; return; }
+        theoC = 1402.385 + 5.0388 * t - 0.05799 * t * t + 0.000323 * t * t * t;
+        document.getElementById('theo_display').innerText = `理論聲速：${theoC.toFixed(1)} m/s`;
+        check();
+    }
+
+    function check() {
+        const c = parseFloat(document.getElementById('c_val').value);
+        const s = parseFloat(document.getElementById('s_val').value);
+        const g = parseFloat(document.getElementById('g_val').value);
+        const snr = parseFloat(document.getElementById('snr_val').value);
+        const res = document.getElementById('result');
+        const errContainer = document.getElementById('error-details');
+
+        if (isNaN(c) || isNaN(s) || isNaN(g) || isNaN(snr) || theoC === 0) { res.style.display = 'none'; return; }
+
+        res.style.display = 'block';
+        let findings = [];
+        let isFail = false;
+        let diff = Math.abs((c - theoC) / theoC) * 100;
+
+        // 1. 聲速判定 (c)
+        if (c > 1540) {
+            findings.push({ tag: 'red', label: "聲速異常 (極高)", val: `${c} m/s`, range: "(標準: ±2%, 警告: >1540)", sug: "疑為管壁短路波干擾。請微調間距(增加5-10mm)或換Z模式。" });
+            isFail = true;
+        } else if (diff > 2) {
+            findings.push({ tag: 'yellow', label: "聲速偏差較大", val: `${diff.toFixed(1)}%`, range: "(標準: ±2%)", sug: "請確認管徑、壁厚輸入是否正確，或微調安裝位置。" });
+        }
+
+        // 2. 振幅判定 (S)
+        if (s < 23) {
+            findings.push({ tag: 'red', label: "振幅嚴重不足", val: `${s}%`, range: "(紅燈: <23%)", sug: "能量過低。請確認打磨至金屬光澤、重塗耦合劑或更換安裝點。" });
+            isFail = true;
+        } else if (s < 33) {
+            findings.push({ tag: 'yellow', label: "振幅偏弱", val: `${s}%`, range: "(黃燈: 23-33%, 綠燈: >33%)", sug: "請增加耦合劑用量或嘗試優化打磨細度。" });
+        }
+
+        // 3. 增益判定 (G)
+        if (g > 113) {
+            findings.push({ tag: 'red', label: "增益極高", val: `${g} dB`, range: "(紅燈: >113dB)", sug: "訊號損耗嚴重。強制切換至 Z 模式以減少聲程損耗。" });
+            isFail = true;
+        } else if (g > 98) {
+            findings.push({ tag: 'yellow', label: "增益偏高", val: `${g} dB`, range: "(黃燈: 98-113dB, 綠燈: <98dB)", sug: "若為大管徑 DIP 可接受。若讀數跳動，請試著換安裝角度。" });
+        }
+
+        // 4. 信噪比判定 (SNR)
+        if (snr < 0) {
+            findings.push({ tag: 'red', label: "信噪比極差", val: `${snr} dB`, range: "(紅燈: <0dB)", sug: "環境干擾嚴重。請隔離電力線、避開閥門亂流或檢查電纜屏蔽。" });
+            isFail = true;
+        } else if (snr < 15) {
+            findings.push({ tag: 'yellow', label: "信噪比偏低", val: `${snr} dB`, range: "(黃燈: 0-15dB, 綠燈: >15dB)", sug: "1. 增加 Damping (阻尼)：由 10s 調高至 30s-60s 以穩定數據。<br>2. 設定 Cut-off (低流速截斷)：過濾微小隨機雜訊。<br>3. 檢查接頭是否緊固。" });
+        }
+
+        // 輸出渲染
+        if (findings.length === 0) {
+            res.className = 'result-box pass';
+            document.getElementById('status-text').innerText = "判定結果：PASS (環境優良)";
+            errContainer.innerHTML = "<div class='error-item' style='text-align:center;'>✅ 所有參數均符合綠燈門檻，可啟動紀錄。</div>";
+        } else {
+            res.className = isFail ? 'result-box fail' : 'result-box warning';
+            document.getElementById('status-text').innerText = isFail ? "判定結果：FAIL (嚴禁紀錄)" : "判定結果：WARNING (建議優化)";
+            errContainer.innerHTML = findings.map(f => `
+                <div class="error-item">
+                    <span class="status-tag tag-${f.tag}">${f.tag === 'red' ? 'FAIL' : 'WARN'}</span>
+                    <strong>${f.label}: ${f.val}</strong>
+                    <div style="font-size:0.75em; color:#888; margin-bottom:4px;">數值範圍 ${f.range}</div>
+                    <div class="suggest-box">💡 建議處置：<br>${f.sug}</div>
+                </div>
+            `).join('');
+        }
+    }
+</script>
+
+</body>
+</html>
