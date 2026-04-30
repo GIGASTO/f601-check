@@ -20,6 +20,7 @@
         .dist-row { display: flex; gap: 10px; }
         .dist-row div { flex: 1; }
         .hint { color: #666; font-size: 0.75em; display: block; margin-top: 5px; line-height: 1.3; }
+        .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; font-weight: bold; margin-bottom: 4px; }
     </style>
 </head>
 <body>
@@ -27,25 +28,28 @@
 <div class="card">
     <h2>F601 架設信心診斷</h2>
     
+    <!-- 1. 水溫與理論聲速 -->
     <div class="input-group">
         <label>1. 現場水溫 (°C)</label>
         <input type="number" id="temp" placeholder="請輸入現場水溫" oninput="run()">
-        <span class="hint">💡 依據 UNESCO 公式計算純水理論聲速。</span>
     </div>
     <div id="theo_display" class="theo-box">理論聲速：--- m/s</div>
 
+    <!-- 2. 實測聲速 -->
     <div class="input-group">
         <label>2. 實測聲速 c (m/s)</label>
         <input type="number" id="c_val" placeholder="儀器診斷畫面之 c 值" oninput="run()">
         <div id="c_fb" class="feedback"></div>
     </div>
 
+    <!-- 3. S 振幅 -->
     <div class="input-group">
         <label>3. S 振幅 (條狀圖格數 0-9)</label>
         <input type="number" id="s_val" placeholder="請填格數" min="0" max="9" oninput="run()">
         <div id="s_fb" class="feedback"></div>
     </div>
 
+    <!-- 4. Q 狀態 -->
     <div class="input-group">
         <label>4. Q 訊號品質狀態</label>
         <select id="q_state" onchange="run()">
@@ -57,18 +61,21 @@
         <div id="q_fb" class="feedback"></div>
     </div>
 
+    <!-- 5. Gain 診斷 -->
     <div class="input-group">
         <label>5. Gain 訊號增益 (dB)</label>
         <input type="number" id="g_val" placeholder="請輸入 Gain 值" oninput="run()">
         <div id="g_fb" class="feedback"></div>
     </div>
 
+    <!-- 6. SNR 診斷 -->
     <div class="input-group">
         <label>6. SNR 信噪比 (dB)</label>
         <input type="number" id="snr_val" placeholder="請輸入 SNR 值" oninput="run()">
         <div id="snr_fb" class="feedback"></div>
     </div>
 
+    <!-- 7. 間距分級診斷 -->
     <div class="input-group" style="border-left-color: #4299e1;">
         <label>7. 探頭間距確認 (Distance)</label>
         <div class="dist-row">
@@ -76,7 +83,7 @@
             <div><input type="number" id="d_real" placeholder="現場實際" oninput="run()"></div>
         </div>
         <div id="d_fb" class="feedback"></div>
-        <span class="hint">💡 請以「正式測量開始後」畫面顯示的建議值為準。</span>
+        <span class="hint">💡 以「正式測量開始後」顯示之建議值為準。</span>
     </div>
 </div>
 
@@ -93,7 +100,6 @@
 
         let theoC = 0;
         if (!isNaN(t)) {
-            // UNESCO 水聲速公式
             theoC = 1402.385 + 5.0388 * t - 0.05799 * t * t + 0.000323 * t * t * t;
             document.getElementById('theo_display').innerText = `理論聲速：${theoC.toFixed(1)} m/s`;
         }
@@ -103,11 +109,11 @@
         if (!isNaN(c) && theoC > 0) {
             let diffPercent = Math.abs(c - theoC) / theoC;
             if (c > 1540) {
-                showFb(cFb, 'f-err', `❌ 聲速極高(${c})：抓到「管壁短路波」！嚴禁記錄。請重新執行 Signal Search 或嘗試 Z 模式。`);
+                showFb(cFb, 'f-err', `❌ 聲速極高(${c})：抓到「管壁波」！嚴禁記錄。請重新 Signal Search 或換 Z 模式。`);
             } else if (diffPercent > 0.02) {
-                showFb(cFb, 'f-err', `❌ 偏差過大(${(diffPercent*100).toFixed(1)}%)：與理論聲速不符，數據將有嚴重線性誤差。`);
+                showFb(cFb, 'f-err', `❌ 偏差過大(${(diffPercent*100).toFixed(1)}%)：超過 2% 標準。數據將有明顯線性誤差！`);
             } else {
-                showFb(cFb, 'f-ok', `✅ 聲速正確：偏差在 2% 標準內。`);
+                showFb(cFb, 'f-ok', `✅ 聲速正確：偏差在 2% 內，確認抓到流體訊號。`);
             }
         }
 
@@ -116,39 +122,41 @@
         if (!isNaN(s)) {
             if (s >= 3) showFb(sFb, 'f-ok', `✅ 能量充足 (等級 ${s})。`);
             else if (s == 2) showFb(sFb, 'f-warn', `⚠️ 能量偏弱：請重新檢查打磨度或重塗耦合劑。`);
-            else showFb(sFb, 'f-err', `❌ 能量極低：訊號不足以支撐長期紀錄。`);
+            else showFb(sFb, 'f-err', `❌ 能量極低：嚴禁紀錄。`);
         }
 
         // 3. Q 判定
         const qFb = document.getElementById('q_fb');
-        if (q === 'undef') showFb(qFb, 'f-err', `❌ UNDEF：儀器無法讀取波形，請檢查探頭是否正確安裝。`);
-        else if (q === 'jump') showFb(qFb, 'f-warn', `⚠️ 後三格跳動：相關性不穩，零點可能飄移。建議微調探頭位置 1-2mm。`);
-        else if (q === 'stable') showFb(qFb, 'f-ok', `✅ 訊號穩定：後三格固定，數據相干性良好。`);
+        if (q === 'undef') showFb(qFb, 'f-err', `❌ UNDEF：儀器無法讀取波形。`);
+        else if (q === 'jump') showFb(qFb, 'f-warn', `⚠️ 後三格跳動：相關性不穩。零點可能飄移，建議微調探頭位置。`);
+        else if (q === 'stable') showFb(qFb, 'f-ok', `✅ 訊號穩定：後三格固定，數據可靠度高。`);
 
         // 4. Gain 判定
         const gFb = document.getElementById('g_fb');
         if (!isNaN(g)) {
             if (g < 98) showFb(gFb, 'f-ok', `✅ 增益優良 (${g} dB)。`);
-            else if (g <= 113) showFb(gFb, 'f-warn', `⚠️ 增益偏高 (${g} dB)：大管徑常見現象，但須確保 Q 值穩定。`);
-            else showFb(gFb, 'f-err', `❌ 增益極高 (${g} dB)：訊號嚴重衰減，建議改用 Z 模式。`);
+            else if (g <= 113) showFb(gFb, 'f-warn', `⚠️ 增益偏高 (${g} dB)：大管徑可接受，但須確保穩定。`);
+            else showFb(gFb, 'f-err', `❌ 增益極高 (${g} dB)：訊號嚴重衰減。`);
         }
 
         // 5. SNR 判定
         const snrFb = document.getElementById('snr_fb');
         if (!isNaN(snr)) {
             if (snr > 15) showFb(snrFb, 'f-ok', `✅ SNR 良好 (${snr} dB)。`);
-            else if (snr >= 0) showFb(snrFb, 'f-warn', `⚠️ SNR 偏低 (${snr} dB)：環境雜訊干擾，請嘗試增加阻尼 (Damping)。`);
+            else if (snr >= 0) showFb(snrFb, 'f-warn', `⚠️ SNR 偏低 (${snr} dB)：環境雜訊干擾，建議增加 Damping。`);
             else showFb(snrFb, 'f-err', `❌ SNR 極差 (${snr} dB)：嚴禁紀錄。`);
         }
 
-        // 6. 間距判定
+        // 6. 間距分級判定 (新邏輯)
         const dFb = document.getElementById('d_fb');
         if (!isNaN(ds) && !isNaN(dr)) {
             let dDiff = Math.abs(ds - dr);
-            if (dDiff <= 5) {
-                showFb(dFb, 'f-ok', `✅ 間距優良：實際與建議偏差 ${dDiff.toFixed(1)}mm。`);
+            if (dDiff <= 2) {
+                showFb(dFb, 'f-ok', `✅ <strong>優良 (Pro)</strong>：偏差僅 ${dDiff.toFixed(1)}mm。訊號相位完美對齊。`);
+            } else if (dDiff <= 5) {
+                showFb(dFb, 'f-warn', `⚠️ <strong>合格 (Standard)</strong>：偏差 ${dDiff.toFixed(1)}mm。符合原廠標準，但若 Q 值跳動建議再微調。`);
             } else {
-                showFb(dFb, 'f-err', `❌ 偏差過大(${dDiff.toFixed(1)}mm)：請以測量中之建議值為準，將探頭移至 $\pm 5$mm 內。`);
+                showFb(dFb, 'f-err', `❌ <strong>警告 (Fail)</strong>：偏差 ${dDiff.toFixed(1)}mm。超過 5mm 容許值，請重新校正探頭位置。`);
             }
         }
     }
