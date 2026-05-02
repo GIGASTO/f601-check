@@ -3,91 +3,299 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>F601 現場安裝信心診斷</title>
+    <title>F601 綜合工具箱 (步驟整合版)</title>
     <style>
-        body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; background: #f4f7f9; padding: 15px; color: #333; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 480px; margin: auto; }
-        h2 { color: #1a73e8; text-align: center; margin-bottom: 20px; border-bottom: 2px solid #e8f0fe; padding-bottom: 10px; }
-        .input-group { margin-bottom: 18px; border-left: 4px solid #e2e8f0; padding-left: 10px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.95em; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; background: #fff; }
-        input:focus, select:focus { border-color: #1a73e8; outline: none; background: #fff; }
-        .feedback { margin-top: 8px; font-size: 0.85em; padding: 10px; border-radius: 6px; display: none; line-height: 1.5; }
-        .f-ok { background: #e6fffa; color: #234e52; display: block; border: 1px solid #b2f5ea; }
-        .f-warn { background: #fffaf0; color: #7b341e; display: block; border: 1px solid #feebc8; }
-        .f-err { background: #fff5f5; color: #822727; display: block; border: 1px solid #feb2b2; }
-        .theo-box { background: #1a73e8; color: white; padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: bold; font-size: 1.1em; }
-        .dist-row { display: flex; gap: 10px; }
-        .dist-row div { flex: 1; }
-        .hint { color: #666; font-size: 0.75em; display: block; margin-top: 5px; line-height: 1.3; }
-        .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; font-weight: bold; margin-bottom: 4px; }
+        /* --- 整合框架樣式 --- */
+        body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; background: #f0f2f5; margin: 0; padding: 0; }
+        .app-container { max-width: 600px; margin: auto; padding-bottom: 50px; }
+        
+        /* 頁籤導覽列 */
+        .tab-bar { 
+            display: flex; 
+            background: #2d3748; 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .tab-btn { 
+            flex: 1; 
+            padding: 15px 5px; 
+            border: none; 
+            background: transparent; 
+            color: #a0aec0; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 0.9em;
+            transition: 0.3s;
+        }
+        .tab-btn.active { color: white; border-bottom: 4px solid #4299e1; background: rgba(255,255,255,0.1); }
+
+        /* 內容區塊控制 */
+        .step-wrapper { display: none; padding: 15px; animation: fadeIn 0.3s ease; }
+        .step-wrapper.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* 底部導覽按鈕 */
+        .nav-footer { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-top: 20px; 
+            padding: 0 10px;
+        }
+        .btn-nav { 
+            padding: 12px 25px; 
+            border-radius: 8px; 
+            border: 1px solid #cbd5e0; 
+            background: white; 
+            cursor: pointer; 
+            font-weight: bold;
+            font-size: 1em;
+        }
+        .btn-next { background: #1a73e8; color: white; border: none; }
+    </style>
+
+    <!-- 步驟一的原始樣式 -->
+    <style>
+        .s1-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border-top: 8px solid #2d3748; }
+        .s1-h2 { color: #1a202c; text-align: center; margin-bottom: 25px; font-size: 1.4em; }
+        .s1-section-box { background: #ffffff; border: 1px solid #e2e8f0; padding: 18px; border-radius: 12px; margin-bottom: 20px; }
+        .s1-section-title { font-weight: bold; color: #c53030; margin-bottom: 12px; display: flex; align-items: center; font-size: 1.1em; }
+        .s1-result-display { margin-top: 12px; padding: 15px; border-radius: 8px; text-align: center; display: none; }
+        .s1-v-bg { background: #fff5f5; border: 1px solid #feb2b2; }
+        .s1-r-bg { background: #ebf8ff; border: 1px solid #bee3f8; }
+        .s1-val-large { font-size: 2.2em; font-weight: 900; color: #2d3748; }
+        .s1-hint { margin-top: 10px; font-size: 0.85em; color: #718096; border-top: 1px solid #edf2f7; pt: 8px; }
+        .s1-key-btn { background: #4a5568; color: white; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+    </style>
+
+    <!-- 步驟二的原始樣式 -->
+    <style>
+        .s2-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .s2-h2 { color: #2b6cb0; text-align: center; border-bottom: 2px solid #bee3f8; padding-bottom: 10px; margin-bottom: 20px; }
+        .s2-result-box { margin-top: 20px; padding: 15px; background: #ebf8ff; border: 1px solid #90cdf4; border-radius: 8px; display: none; }
+        .s2-result-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #bee3f8; }
+        .s2-val { font-weight: bold; color: #2c5282; font-size: 1.1em; }
+    </style>
+
+    <!-- 步驟三的原始樣式 -->
+    <style>
+        .s3-card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .s3-h2 { color: #1a73e8; text-align: center; margin-bottom: 20px; border-bottom: 2px solid #e8f0fe; padding-bottom: 10px; }
+        .s3-feedback { margin-top: 8px; font-size: 0.85em; padding: 10px; border-radius: 6px; display: none; line-height: 1.5; }
+        .s3-f-ok { background: #e6fffa; color: #234e52; display: block; border: 1px solid #b2f5ea; }
+        .s3-f-warn { background: #fffaf0; color: #7b341e; display: block; border: 1px solid #feebc8; }
+        .s3-f-err { background: #fff5f5; color: #822727; display: block; border: 1px solid #feb2b2; }
+        .s3-theo-box { background: #1a73e8; color: white; padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: bold; font-size: 1.1em; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>F601 架設信心診斷</h2>
-    
-    <!-- 1. 水溫與理論聲速 -->
-    <div class="input-group">
-        <label>1. 現場水溫 (°C)</label>
-        <input type="number" id="temp" placeholder="請輸入現場水溫" oninput="run()">
-    </div>
-    <div id="theo_display" class="theo-box">理論聲速：--- m/s</div>
-
-    <!-- 2. 實測聲速 -->
-    <div class="input-group">
-        <label>2. 實測聲速 c (m/s)</label>
-        <input type="number" id="c_val" placeholder="儀器診斷畫面之 c 值" oninput="run()">
-        <div id="c_fb" class="feedback"></div>
+<div class="app-container">
+    <!-- 頂部切換頁籤 -->
+    <div class="tab-bar">
+        <button id="btnTab1" class="tab-btn active" onclick="switchStep(1)">1. 參數設定</button>
+        <button id="btnTab2" class="tab-btn" onclick="switchStep(2)">2. 管材查詢</button>
+        <button id="btnTab3" class="tab-btn" onclick="switchStep(3)">3. 信心診斷</button>
     </div>
 
-    <!-- 3. S 振幅 -->
-    <div class="input-group">
-        <label>3. S 振幅 (條狀圖格數 0-9)</label>
-        <input type="number" id="s_val" placeholder="請填格數" min="0" max="9" oninput="run()">
-        <div id="s_fb" class="feedback"></div>
-    </div>
-
-    <!-- 4. Q 狀態 -->
-    <div class="input-group">
-        <label>4. Q 訊號品質狀態</label>
-        <select id="q_state" onchange="run()">
-            <option value="">--請選擇狀態--</option>
-            <option value="undef">顯示 UNDEF (無法量測)</option>
-            <option value="jump">頻繁跳動 / 閃爍 (後三格不穩)</option>
-            <option value="stable">穩定固定 (滿格/高位)</option>
-        </select>
-        <div id="q_fb" class="feedback"></div>
-    </div>
-
-    <!-- 5. Gain 診斷 -->
-    <div class="input-group">
-        <label>5. Gain 訊號增益 (dB)</label>
-        <input type="number" id="g_val" placeholder="請輸入 Gain 值" oninput="run()">
-        <div id="g_fb" class="feedback"></div>
-    </div>
-
-    <!-- 6. SNR 診斷 -->
-    <div class="input-group">
-        <label>6. SNR 信噪比 (dB)</label>
-        <input type="number" id="snr_val" placeholder="請輸入 SNR 值" oninput="run()">
-        <div id="snr_fb" class="feedback"></div>
-    </div>
-
-    <!-- 7. 間距分級診斷 -->
-    <div class="input-group" style="border-left-color: #4299e1;">
-        <label>7. 探頭間距確認 (Distance)</label>
-        <div class="dist-row">
-            <div><input type="number" id="d_suggest" placeholder="F601 建議" oninput="run()"></div>
-            <div><input type="number" id="d_real" placeholder="現場實際" oninput="run()"></div>
+    <!-- 步驟一內容 -->
+    <div id="wrapper1" class="step-wrapper active">
+        <div class="s1-card">
+            <h2 class="s1-h2">儀器參數設定指引</h2>
+            <div class="s1-section-box">
+                <div class="s1-section-title"><i>A.</i> 測厚計聲速校正 (Olympus 27MG)</div>
+                <label style="display:block;margin-bottom:10px;font-weight:bold;color:#4a5568;">1. 選擇現場管材</label>
+                <select id="vSelect" onchange="handleVChange()" style="width:100%;padding:12px;border:1px solid #cbd5e0;border-radius:8px;font-size:16px;">
+                    <option value="">-- 請選擇材質 --</option>
+                    <option value="SSP">不鏽鋼鋼管 (SSP)</option>
+                    <option value="SP">鋼管 / 碳鋼 (SP)</option>
+                    <option value="PVCP">聚氯乙烯管 (PVCP)</option>
+                    <option value="HIWP">耐衝擊 PVC 管 (HIWP)</option>
+                    <option value="HDPE">高密度聚乙烯 (HDPE)</option>
+                    <option value="DIP">延性鑄鐵管 (DIP)</option>
+                    <option value="CIP">灰口鑄鐵管 (CIP)</option>
+                </select>
+                <div id="vResult" class="s1-result-display s1-v-bg">
+                    <span class="s1-val-large" id="v_val">-</span><span style="font-size:0.6em;color:#718096;margin-left:5px;">mm/µs</span>
+                    <div class="s1-hint">操作：按 <span class="s1-key-btn">2nd F</span> 後按 <span class="s1-key-btn">CAL VEL</span> 輸入數值</div>
+                </div>
+            </div>
+            <div class="s1-section-box">
+                <div class="s1-section-title"><i>B.</i> 流量計粗糙度設定 (F601)</div>
+                <label style="display:block;margin-bottom:10px;font-weight:bold;color:#4a5568;">2. 判斷管內壁狀態</label>
+                <select id="rSelect" onchange="handleRChange()" style="width:100%;padding:12px;border:1px solid #cbd5e0;border-radius:8px;font-size:16px;">
+                    <option value="">-- 請先選擇管材 --</option>
+                </select>
+                <div id="rResult" class="s1-result-display s1-r-bg">
+                    <span class="s1-val-large" id="r_val">-</span><span style="font-size:0.6em;color:#718096;margin-left:5px;">mm</span>
+                    <div class="s1-hint">輸入位址：F601 選單中的 <span style="color:#e53e3e;font-weight:bold;">[Roughness]</span> 欄位</div>
+                </div>
+            </div>
         </div>
-        <div id="d_fb" class="feedback"></div>
-        <span class="hint">💡 以「正式測量開始後」顯示之建議值為準。</span>
+        <div class="nav-footer">
+            <div></div>
+            <button class="btn-nav btn-next" onclick="switchStep(2)">下一步：管材查詢 ＞</button>
+        </div>
+    </div>
+
+    <!-- 步驟二內容 -->
+    <div id="wrapper2" class="step-wrapper">
+        <div class="s2-card">
+            <h2 class="s2-h2">Step 2: 管材規格查詢</h2>
+            <div style="margin-bottom:15px;">
+                <label style="display:block;margin-bottom:8px;font-weight:bold;color:#4a5568;">1. 選擇管種 (Material)</label>
+                <select id="pipeType" onchange="updateDisplay()" style="width:100%;padding:12px;border:1px solid #cbd5e0;border-radius:8px;font-size:16px;">
+                    <option value="">-- 請選擇管種 --</option>
+                    <option value="PVCP">PVCP (塑膠管)</option>
+                    <option value="DIP">DIP (球化石墨鑄鐵管)</option>
+                    <option value="CIP">CIP (普通鑄鐵管)</option>
+                    <option value="SP">SP (鋼管 - 一般)</option>
+                    <option value="SP_BRIDGE">SP (鋼管 - 水管橋)</option>
+                    <option value="SSP_BRIDGE">SSP (不鏽鋼管 - 水管橋)</option>
+                </select>
+            </div>
+            <div style="margin-bottom:15px;">
+                <label style="display:block;margin-bottom:8px;font-weight:bold;color:#4a5568;">2. 選擇標稱管徑 (DN)</label>
+                <select id="pipeSize" onchange="updateDisplay()" style="width:100%;padding:12px;border:1px solid #cbd5e0;border-radius:8px;font-size:16px;">
+                    <option value="">-- 請選擇管徑 --</option>
+                    <script>
+                        const allDns = [16, 20, 25, 40, 50, 65, 75, 80, 100, 125, 150, 200, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1350, 1500, 1600, 1650, 1750, 1800, 1900, 2000];
+                        allDns.forEach(dn => {
+                            document.write(`<option value="${dn}.0">DN ${dn}</option>`);
+                        });
+                    </script>
+                </select>
+            </div>
+            <div id="result" class="s2-result-box">
+                <div class="s2-result-item"><span>外徑 (OD):</span> <span id="od">-</span></div>
+                <div class="s2-result-item"><span>管厚 (WT):</span> <span id="wt">-</span></div>
+                <div class="s2-result-item"><span>內襯 (Lining):</span> <span id="lining">-</span></div>
+            </div>
+        </div>
+        <div class="nav-footer">
+            <button class="btn-nav" onclick="switchStep(1)">＜ 上一步</button>
+            <button class="btn-nav btn-next" onclick="switchStep(3)">下一步：信心診斷 ＞</button>
+        </div>
+    </div>
+
+    <!-- 步驟三內容 -->
+    <div id="wrapper3" class="step-wrapper">
+        <div class="s3-card">
+            <h2 class="s3-h2">F601 架設信心診斷</h2>
+            <div style="margin-bottom:18px;border-left:4px solid #e2e8f0;padding-left:10px;">
+                <label style="display:block;margin-bottom:5px;font-weight:bold;font-size:0.95em;">1. 現場水溫 (°C)</label>
+                <input type="number" id="temp" placeholder="請輸入現場水溫" oninput="run()" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-size:16px;">
+            </div>
+            <div id="theo_display" class="s3-theo-box">理論聲速：--- m/s</div>
+            <div style="margin-bottom:18px;border-left:4px solid #e2e8f0;padding-left:10px;">
+                <label style="display:block;margin-bottom:5px;font-weight:bold;font-size:0.95em;">2. 實測聲速 c (m/s)</label>
+                <input type="number" id="c_val" placeholder="儀器診斷畫面之 c 值" oninput="run()" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-size:16px;">
+                <div id="c_fb" class="s3-feedback"></div>
+            </div>
+            <div style="margin-bottom:18px;border-left:4px solid #e2e8f0;padding-left:10px;">
+                <label style="display:block;margin-bottom:5px;font-weight:bold;font-size:0.95em;">3. S 振幅 (條狀圖格數 0-9)</label>
+                <input type="number" id="s_val" placeholder="請填格數" min="0" max="9" oninput="run()" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-size:16px;">
+                <div id="s_fb" class="s3-feedback"></div>
+            </div>
+            <div style="margin-bottom:18px;border-left:4px solid #e2e8f0;padding-left:10px;">
+                <label style="display:block;margin-bottom:5px;font-weight:bold;font-size:0.95em;">4. Q 訊號品質狀態</label>
+                <select id="q_state" onchange="run()" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-size:16px;">
+                    <option value="">--請選擇狀態--</option>
+                    <option value="undef">顯示 UNDEF (無法量測)</option>
+                    <option value="jump">頻繁跳動 / 閃爍 (後三格不穩)</option>
+                    <option value="stable">穩定固定 (滿格/高位)</option>
+                </select>
+                <div id="q_fb" class="s3-feedback"></div>
+            </div>
+            <div style="margin-bottom:18px;border-left:4px solid #e2e8f0;padding-left:10px;">
+                <label style="display:block;margin-bottom:5px;font-weight:bold;font-size:0.95em;">5. Gain 訊號增益 (dB)</label>
+                <input type="number" id="g_val" placeholder="請輸入 Gain 值" oninput="run()" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-size:16px;">
+                <div id="g_fb" class="s3-feedback"></div>
+            </div>
+            <div style="margin-bottom:18px;border-left:4px solid #e2e8f0;padding-left:10px;">
+                <label style="display:block;margin-bottom:5px;font-weight:bold;font-size:0.95em;">6. SNR 信噪比 (dB)</label>
+                <input type="number" id="snr_val" placeholder="請輸入 SNR 值" oninput="run()" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-size:16px;">
+                <div id="snr_fb" class="s3-feedback"></div>
+            </div>
+            <div style="margin-bottom:18px;border-left:4px solid #4299e1;padding-left:10px;">
+                <label style="display:block;margin-bottom:5px;font-weight:bold;font-size:0.95em;">7. 探頭間距確認 (Distance)</label>
+                <div style="display:flex; gap:10px;">
+                    <div style="flex:1;"><input type="number" id="d_suggest" placeholder="F601 建議" oninput="run()" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-size:16px;"></div>
+                    <div style="flex:1;"><input type="number" id="d_real" placeholder="現場實際" oninput="run()" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-size:16px;"></div>
+                </div>
+                <div id="d_fb" class="s3-feedback"></div>
+            </div>
+        </div>
+        <div class="nav-footer">
+            <button class="btn-nav" onclick="switchStep(2)">＜ 上一步</button>
+            <div></div>
+        </div>
     </div>
 </div>
 
 <script>
+    /* --- 核心切換邏輯 --- */
+    function switchStep(stepNum) {
+        // 隱藏所有區塊
+        document.querySelectorAll('.step-wrapper').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        
+        // 顯示目標區塊
+        document.getElementById('wrapper' + stepNum).classList.add('active');
+        document.getElementById('btnTab' + stepNum).classList.add('active');
+        
+        // 回到頂部
+        window.scrollTo(0, 0);
+    }
+
+    /* --- 步驟一原始 JS --- */
+    const materialData = {
+        "SSP": { v: 5.66, options: [{ text: "新管 (New)", val: "0.01~0.05" }, { text: "精加工 / 拋光表面", val: "最大值 0.01" }, { text: "一般刨光表面", val: "0.01~0.04" }, { text: "粗刨加工表面", val: "0.05~0.1" }] },
+        "SP": { v: 5.89, options: [{ text: "新管 (New)", val: "0.05~0.1" }, { text: "長期使用且清理過", val: "0.15~0.2" }, { text: "中度生鏽 / 輕微結垢", val: "最大 0.4" }, { text: "嚴重結垢", val: "最大 3" }] },
+        "PVCP": { v: 2.39, options: [{ text: "塑膠管標準 (光滑)", val: "0~0.0015" }] },
+        "HIWP": { v: 2.39, options: [{ text: "塑膠管標準 (光滑)", val: "0~0.0015" }] },
+        "HDPE": { v: 2.46, options: [{ text: "塑膠管標準 (光滑)", val: "0~0.0015" }] },
+        "DIP": { v: 4.80, options: [{ text: "新管 (無內襯)", val: "0.25~1" }] },
+        "CIP": { v: 4.60, options: [{ text: "新管 (無內襯)", val: "0.25~1" }, { text: "已生鏽 (Rusted)", val: "1~1.5" }, { text: "結垢嚴重 (Encrusted)", val: "1.5~3" }] }
+    };
+    function handleVChange() {
+        const m = document.getElementById('vSelect').value;
+        const rSelect = document.getElementById('rSelect');
+        const vResult = document.getElementById('vResult');
+        rSelect.innerHTML = '<option value="">-- 請選擇詳細狀態 --</option>';
+        if (m && materialData[m]) {
+            vResult.style.display = 'block';
+            document.getElementById('v_val').innerText = materialData[m].v.toFixed(2);
+            materialData[m].options.forEach(opt => {
+                const o = document.createElement('option'); o.value = opt.val; o.innerText = opt.text; rSelect.appendChild(o);
+            });
+        } else { vResult.style.display = 'none'; document.getElementById('rResult').style.display = 'none'; }
+    }
+    function handleRChange() {
+        const val = document.getElementById('rSelect').value;
+        const rResult = document.getElementById('rResult');
+        if (val) { rResult.style.display = 'block'; document.getElementById('r_val').innerText = val; }
+        else { rResult.style.display = 'none'; }
+    }
+
+    /* --- 步驟二原始 JS --- */
+    const db = {"PVCP": {"16.0": {"od": 22.0, "wt": 3.0, "lining": 0}, "20.0": {"od": 26.0, "wt": 3.0, "lining": 0}, "25.0": {"od": 32.0, "wt": 3.5, "lining": 0}, "40.0": {"od": 48.0, "wt": 4.0, "lining": 0}, "50.0": {"od": 60.0, "wt": 4.5, "lining": 0}, "65.0": {"od": 76.0, "wt": 4.5, "lining": 0}, "80.0": {"od": 89.0, "wt": 5.5, "lining": 0}, "100.0": {"od": 114.0, "wt": 7.0, "lining": 0}, "125.0": {"od": 140.0, "wt": 7.5, "lining": 0}, "150.0": {"od": 165.0, "wt": 8.5, "lining": 0}, "200.0": {"od": 216.0, "wt": 10.5, "lining": 0}, "250.0": {"od": 267.0, "wt": 13.0, "lining": 0}, "300.0": {"od": 318.0, "wt": 15.5, "lining": 0}, "350.0": {"od": 370.0, "wt": 18.5, "lining": 0}, "400.0": {"od": 420.0, "wt": 20.5, "lining": 0}}, "DIP": {"75.0": {"od": 93.0, "wt": 7.5, "lining": 4.0}, "100.0": {"od": 118.0, "wt": 7.5, "lining": 4.0}, "150.0": {"od": 169.0, "wt": 7.5, "lining": 4.0}, "200.0": {"od": 220.0, "wt": 7.5, "lining": 4.0}, "250.0": {"od": 271.6, "wt": 7.5, "lining": 4.0}, "300.0": {"od": 322.8, "wt": 7.5, "lining": 6.0}, "350.0": {"od": 374.0, "wt": 7.5, "lining": 6.0}, "400.0": {"od": 425.6, "wt": 8.5, "lining": 6.0}, "450.0": {"od": 476.8, "wt": 9.0, "lining": 6.0}, "500.0": {"od": 528.0, "wt": 9.5, "lining": 6.0}, "600.0": {"od": 630.8, "wt": 11.0, "lining": 6.0}, "700.0": {"od": 733.0, "wt": 12.0, "lining": 8.0}, "800.0": {"od": 836.0, "wt": 13.5, "lining": 8.0}, "900.0": {"od": 939.0, "wt": 15.0, "lining": 8.0}, "1000.0": {"od": 1041.0, "wt": 16.5, "lining": 10.0}, "1100.0": {"od": 1144.0, "wt": 18.0, "lining": 10.0}, "1200.0": {"od": 1246.0, "wt": 19.5, "lining": 10.0}, "1350.0": {"od": 1400.0, "wt": 21.5, "lining": 12.0}, "1500.0": {"od": 1554.0, "wt": 23.5, "lining": 12.0}, "1600.0": {"od": 1650.0, "wt": 25.0, "lining": 15.0}, "1650.0": {"od": 1701.0, "wt": 25.0, "lining": 15.0}, "1800.0": {"od": 1848.0, "wt": 28.0, "lining": 15.0}, "2000.0": {"od": 2061.0, "wt": 30.5, "lining": 15.0}}, "CIP": {"75.0": {"od": 93.0, "wt": 7.5, "lining": 0}, "100.0": {"od": 118.0, "wt": 7.5, "lining": 0}, "125.0": {"od": 143.0, "wt": 7.8, "lining": 0}, "150.0": {"od": 169.0, "wt": 8.0, "lining": 0}, "200.0": {"od": 220.0, "wt": 8.8, "lining": 0}, "250.0": {"od": 271.6, "wt": 9.5, "lining": 0}, "300.0": {"od": 322.8, "wt": 10.0, "lining": 0}, "350.0": {"od": 374.0, "wt": 10.8, "lining": 0}, "400.0": {"od": 425.6, "wt": 11.5, "lining": 0}, "450.0": {"od": 476.8, "wt": 12.0, "lining": 0}, "500.0": {"od": 528.0, "wt": 12.8, "lining": 0}, "600.0": {"od": 630.8, "wt": 14.2, "lining": 0}}, "SP": {"50.0": {"od": 60.5, "wt": 3.8, "lining": 0}, "65.0": {"od": 76.3, "wt": 4.2, "lining": 0}, "80.0": {"od": 89.1, "wt": 4.2, "lining": 0}, "100.0": {"od": 114.3, "wt": 4.5, "lining": 0}, "125.0": {"od": 139.8, "wt": 4.5, "lining": 0}, "150.0": {"od": 165.2, "wt": 5.0, "lining": 0}, "200.0": {"od": 216.3, "wt": 5.8, "lining": 0}, "250.0": {"od": 267.4, "wt": 6.6, "lining": 0}, "300.0": {"od": 318.5, "wt": 6.9, "lining": 0}, "350.0": {"od": 355.6, "wt": 6.0, "lining": 0}, "400.0": {"od": 406.4, "wt": 6.0, "lining": 0}, "450.0": {"od": 457.2, "wt": 6.0, "lining": 0}, "500.0": {"od": 508.0, "wt": 6.0, "lining": 0}, "600.0": {"od": 609.6, "wt": 6.0, "lining": 0}, "700.0": {"od": 711.2, "wt": 7.0, "lining": 0}, "800.0": {"od": 812.8, "wt": 8.0, "lining": 0}, "900.0": {"od": 914.4, "wt": 8.0, "lining": 0}, "1000.0": {"od": 1016.0, "wt": 9.0, "lining": 0}, "1100.0": {"od": 1117.6, "wt": 10.0, "lining": 0}, "1200.0": {"od": 1219.2, "wt": 11.0, "lining": 0}, "1350.0": {"od": 1371.6, "wt": 12.0, "lining": 0}, "1500.0": {"od": 1524.0, "wt": 14.0, "lining": 0}, "1600.0": {"od": 1625.6, "wt": 15.0, "lining": 0}, "1650.0": {"od": 1676.4, "wt": 15.0, "lining": 0}, "1750.0": {"od": 1778.0, "wt": 15.0, "lining": 0}, "1800.0": {"od": 1828.8, "wt": 16.0, "lining": 0}, "1900.0": {"od": 1930.4, "wt": 17.0, "lining": 0}, "2000.0": {"od": 2032.0, "wt": 18.0, "lining": 0}}, "SP_BRIDGE": {"80.0": {"od": 89.1, "wt": 5.4, "lining": 0}, "100.0": {"od": 114.3, "wt": 6.0, "lining": 0}, "125.0": {"od": 139.8, "wt": 6.0, "lining": 0}, "150.0": {"od": 165.2, "wt": 6.0, "lining": 0}, "200.0": {"od": 216.3, "wt": 7.0, "lining": 0}, "250.0": {"od": 267.4, "wt": 7.8, "lining": 0}, "300.0": {"od": 318.5, "wt": 8.0, "lining": 0}, "350.0": {"od": 355.6, "wt": 9.5, "lining": 0}, "400.0": {"od": 406.4, "wt": 9.5, "lining": 0}, "450.0": {"od": 457.2, "wt": 9.5, "lining": 0}, "500.0": {"od": 508.0, "wt": 9.5, "lining": 0}, "600.0": {"od": 609.6, "wt": 10.0, "lining": 0}, "700.0": {"od": 711.2, "wt": 10.0, "lining": 0}, "800.0": {"od": 812.8, "wt": 10.0, "lining": 0}, "900.0": {"od": 914.4, "wt": 10.0, "lining": 0}, "1000.0": {"od": 1016.0, "wt": 12.0, "lining": 0}, "1100.0": {"od": 1117.6, "wt": 12.0, "lining": 0}, "1200.0": {"od": 1219.2, "wt": 14.0, "lining": 0}, "1350.0": {"od": 1371.6, "wt": 14.0, "lining": 0}, "1500.0": {"od": 1524.0, "wt": 16.0, "lining": 0}, "1600.0": {"od": 1625.6, "wt": 16.0, "lining": 0}, "1650.0": {"od": 1676.4, "wt": 18.0, "lining": 0}, "1750.0": {"od": 1778.0, "wt": 18.0, "lining": 0}, "1800.0": {"od": 1828.8, "wt": 20.0, "lining": 0}, "1900.0": {"od": 1930.4, "wt": 20.0, "lining": 0}, "2000.0": {"od": 2032.0, "wt": 22.0, "lining": 0}}, "SSP_BRIDGE": {"50.0": {"od": 60.5, "wt": 3.9, "lining": 0}, "65.0": {"od": 76.3, "wt": 5.2, "lining": 0}, "80.0": {"od": 89.1, "wt": 5.5, "lining": 0}, "100.0": {"od": 114.3, "wt": 6.0, "lining": 0}, "125.0": {"od": 139.8, "wt": 6.6, "lining": 0}, "150.0": {"od": 165.2, "wt": 7.1, "lining": 0}, "200.0": {"od": 216.3, "wt": 8.2, "lining": 0}, "250.0": {"od": 267.4, "wt": 9.3, "lining": 0}, "300.0": {"od": 318.5, "wt": 10.3, "lining": 0}, "350.0": {"od": 355.6, "wt": 11.1, "lining": 0}, "400.0": {"od": 406.4, "wt": 12.7, "lining": 0}, "450.0": {"od": 457.2, "wt": 14.3, "lining": 0}, "500.0": {"od": 508.0, "wt": 15.1, "lining": 0}, "600.0": {"od": 609.6, "wt": 17.5, "lining": 0}, "1000.0": {"od": 1016.0, "wt": 10.0, "lining": 0}}};
+    function updateDisplay() {
+        const type = document.getElementById('pipeType').value;
+        const dn = document.getElementById('pipeSize').value;
+        const resultBox = document.getElementById('result');
+        if (type && dn) {
+            resultBox.style.display = 'block';
+            const data = (db[type] && db[type][dn]) ? db[type][dn] : null;
+            if (data) { renderVal('od', data.od, 'mm'); renderVal('wt', data.wt, 'mm'); renderVal('lining', data.lining, 'mm'); }
+            else { renderNoData('od'); renderNoData('wt'); renderNoData('lining'); }
+        } else { resultBox.style.display = 'none'; }
+    }
+    function renderVal(id, val, unit) { document.getElementById(id).innerHTML = `<span class="s2-val">${val} ${unit}</span>`; }
+    function renderNoData(id) { document.getElementById(id).innerHTML = `<span style="color:#e53e3e;font-weight:bold;font-style:italic;font-size:0.95em;">無參考數值，請自行量測</span>`; }
+
+    /* --- 步驟三原始 JS --- */
     function run() {
         const t = parseFloat(document.getElementById('temp').value);
         const c = parseFloat(document.getElementById('c_val').value);
@@ -103,68 +311,44 @@
             theoC = 1402.385 + 5.0388 * t - 0.05799 * t * t + 0.000323 * t * t * t;
             document.getElementById('theo_display').innerText = `理論聲速：${theoC.toFixed(1)} m/s`;
         }
-
-        // 1. 聲速判定 (2% 門檻)
         const cFb = document.getElementById('c_fb');
         if (!isNaN(c) && theoC > 0) {
             let diffPercent = Math.abs(c - theoC) / theoC;
-            if (c > 1540) {
-                showFb(cFb, 'f-err', `❌ 聲速極高(${c})：抓到「管壁波」！嚴禁記錄。請重新 Signal Search 或換 Z 模式。`);
-            } else if (diffPercent > 0.02) {
-                showFb(cFb, 'f-err', `❌ 偏差過大(${(diffPercent*100).toFixed(1)}%)：超過 2% 標準。數據將有明顯線性誤差！`);
-            } else {
-                showFb(cFb, 'f-ok', `✅ 聲速正確：偏差在 2% 內，確認抓到流體訊號。`);
-            }
+            if (c > 1540) showFb(cFb, 's3-f-err', `❌ 聲速極高(${c})：抓到「管壁波」！嚴禁記錄。請重新 Signal Search 或換 Z 模式。`);
+            else if (diffPercent > 0.02) showFb(cFb, 's3-f-err', `❌ 偏差過大(${(diffPercent*100).toFixed(1)}%)：超過 2% 標準。數據將有明顯線性誤差！`);
+            else showFb(cFb, 's3-f-ok', `✅ 聲速正確：偏差在 2% 內，確認抓到流體訊號。`);
         }
-
-        // 2. S 判定
         const sFb = document.getElementById('s_fb');
         if (!isNaN(s)) {
-            if (s >= 3) showFb(sFb, 'f-ok', `✅ 能量充足 (等級 ${s})。`);
-            else if (s == 2) showFb(sFb, 'f-warn', `⚠️ 能量偏弱：請重新檢查打磨度或重塗耦合劑。`);
-            else showFb(sFb, 'f-err', `❌ 能量極低：嚴禁紀錄。`);
+            if (s >= 3) showFb(sFb, 's3-f-ok', `✅ 能量充足 (等級 ${s})。`);
+            else if (s == 2) showFb(sFb, 's3-f-warn', `⚠️ 能量偏弱：請重新檢查打磨度或重塗耦合劑。`);
+            else showFb(sFb, 's3-f-err', `❌ 能量極低：嚴禁紀錄。`);
         }
-
-        // 3. Q 判定
         const qFb = document.getElementById('q_fb');
-        if (q === 'undef') showFb(qFb, 'f-err', `❌ UNDEF：儀器無法讀取波形。`);
-        else if (q === 'jump') showFb(qFb, 'f-warn', `⚠️ 後三格跳動：相關性不穩。零點可能飄移，建議微調探頭位置。`);
-        else if (q === 'stable') showFb(qFb, 'f-ok', `✅ 訊號穩定：後三格固定，數據可靠度高。`);
-
-        // 4. Gain 判定
+        if (q === 'undef') showFb(qFb, 's3-f-err', `❌ UNDEF：儀器無法讀取波形。`);
+        else if (q === 'jump') showFb(qFb, 's3-f-warn', `⚠️ 後三格跳動：相關性不穩。零點可能飄移，建議微調探頭位置。`);
+        else if (q === 'stable') showFb(qFb, 's3-f-ok', `✅ 訊號穩定：後三格固定，數據可靠度高。`);
         const gFb = document.getElementById('g_fb');
         if (!isNaN(g)) {
-            if (g < 98) showFb(gFb, 'f-ok', `✅ 增益優良 (${g} dB)。`);
-            else if (g <= 113) showFb(gFb, 'f-warn', `⚠️ 增益偏高 (${g} dB)：大管徑可接受，但須確保穩定。`);
-            else showFb(gFb, 'f-err', `❌ 增益極高 (${g} dB)：訊號嚴重衰減。`);
+            if (g < 98) showFb(gFb, 's3-f-ok', `✅ 增益優良 (${g} dB)。`);
+            else if (g <= 113) showFb(gFb, 's3-f-warn', `⚠️ 增益偏高 (${g} dB)：大管徑可接受，但須確保穩定。`);
+            else showFb(gFb, 's3-f-err', `❌ 增益極高 (${g} dB)：訊號嚴重衰減。`);
         }
-
-        // 5. SNR 判定
         const snrFb = document.getElementById('snr_fb');
         if (!isNaN(snr)) {
-            if (snr > 15) showFb(snrFb, 'f-ok', `✅ SNR 良好 (${snr} dB)。`);
-            else if (snr >= 0) showFb(snrFb, 'f-warn', `⚠️ SNR 偏低 (${snr} dB)：環境雜訊干擾，建議增加 Damping。`);
-            else showFb(snrFb, 'f-err', `❌ SNR 極差 (${snr} dB)：嚴禁紀錄。`);
+            if (snr > 15) showFb(snrFb, 's3-f-ok', `✅ SNR 良好 (${snr} dB)。`);
+            else if (snr >= 0) showFb(snrFb, 's3-f-warn', `⚠️ SNR 偏低 (${snr} dB)：環境雜訊干擾，建議增加 Damping。`);
+            else showFb(snrFb, 's3-f-err', `❌ SNR 極差 (${snr} dB)：嚴禁紀錄。`);
         }
-
-        // 6. 間距分級判定 (新邏輯)
         const dFb = document.getElementById('d_fb');
         if (!isNaN(ds) && !isNaN(dr)) {
             let dDiff = Math.abs(ds - dr);
-            if (dDiff <= 2) {
-                showFb(dFb, 'f-ok', `✅ <strong>優良 (Pro)</strong>：偏差僅 ${dDiff.toFixed(1)}mm。訊號相位完美對齊。`);
-            } else if (dDiff <= 5) {
-                showFb(dFb, 'f-warn', `⚠️ <strong>合格 (Standard)</strong>：偏差 ${dDiff.toFixed(1)}mm。符合原廠標準，但若 Q 值跳動建議再微調。`);
-            } else {
-                showFb(dFb, 'f-err', `❌ <strong>警告 (Fail)</strong>：偏差 ${dDiff.toFixed(1)}mm。超過 5mm 容許值，請重新校正探頭位置。`);
-            }
+            if (dDiff <= 2) showFb(dFb, 's3-f-ok', `✅ <strong>優良 (Pro)</strong>：偏差僅 ${dDiff.toFixed(1)}mm。訊號相位完美對齊。`);
+            else if (dDiff <= 5) showFb(dFb, 's3-f-warn', `⚠️ <strong>合格 (Standard)</strong>：偏差 ${dDiff.toFixed(1)}mm。符合原廠標準，但若 Q 值跳動建議再微調。`);
+            else showFb(dFb, 's3-f-err', `❌ <strong>警告 (Fail)</strong>：偏差 ${dDiff.toFixed(1)}mm。超過 5mm 容許值，請重新校正探頭位置。`);
         }
     }
-
-    function showFb(el, cls, txt) {
-        el.className = 'feedback ' + cls;
-        el.innerHTML = txt;
-    }
+    function showFb(el, cls, txt) { el.className = 's3-feedback ' + cls; el.innerHTML = txt; }
 </script>
 
 </body>
